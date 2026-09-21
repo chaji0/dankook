@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-electron
+release
+
+# 학교 시간표 파일은 선생님·학생 이름이 들어 있으므로 저장소에 올리지 않는다
+*.xlsx
+*.xls
+*.csv
