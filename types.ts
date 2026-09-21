@@ -1,3 +1,5 @@
+import type { SizeStep } from './themes'
+
 export type Kind = '교사' | '학급' | '학생'
 
 export const KINDS: Kind[] = ['교사', '학급', '학생']
@@ -57,6 +59,14 @@ export interface Block {
 }
 
 export interface Settings {
+  /** 내 이름(교사) 또는 학번(학생) — "나" 버튼이 이 시간표를 연다 */
+  myName: string
+  /** 테마색 id (themes.ts) */
+  theme: string
+  /** 위젯(창) 크기 */
+  widgetSize: SizeStep
+  /** 글씨 크기 */
+  fontSize: SizeStep
   alwaysOnTop: boolean
   autoLaunch: boolean
   /** 카드 불투명도 0.5 ~ 1 */
@@ -95,6 +105,10 @@ export const DEFAULT_BLOCKS: Block[] = [
 ]
 
 export const DEFAULT_SETTINGS: Settings = {
+  myName: '',
+  theme: 'blue',
+  widgetSize: 'medium',
+  fontSize: 'medium',
   alwaysOnTop: true,
   autoLaunch: false,
   opacity: 0.94,
@@ -116,4 +130,15 @@ export function emptyState(): AppState {
 
 export function targetKey(kind: Kind, id: string, name: string): string {
   return `${kind}:${id || name}`
+}
+
+/** 설정의 "내 이름"과 맞는 시간표 — 교사는 이름, 학생은 학번으로 찾는다 */
+export function findMine(targets: Target[], myName: string): Target | null {
+  const q = myName.trim()
+  if (!q) return null
+  return (
+    targets.find((t) => t.kind === '교사' && t.name === q) ??
+    targets.find((t) => t.kind === '학생' && t.id === q) ??
+    null
+  )
 }

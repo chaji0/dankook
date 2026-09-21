@@ -1,29 +1,35 @@
 /*
-  색은 두 가지만 쓴다.
-    코코아 #4A3428 — 글자, 곰돌이, 테두리
-    허니   #E8A33D — 지금 이 순간(현재 교시) 단 한 곳
+  글자·선은 짙은 먹색 --ink 로 고정, 강조는 테마색 --primary 하나
+  (설정 → 화면 → 테마색, src/lib/themes.ts)
+    --primary — 선택된 버튼 · 지금 교시 칸 · 학반/학생 시간표 칸(옅게)
   나머지 농담은 모두 투명도로 만든다.
+  글씨 크기는 --fs 배율, 시간표 칸 높이는 --cell-h 로 조절한다.
 */
 
 :root {
-  --cocoa: #4a3428;
-  --honey: #e8a33d;
+  --primary: #2f86dd;
+  --primary-rgb: 47, 134, 221;
+  --on-primary-rgb: 255, 255, 255;
+  --on-primary: rgb(var(--on-primary-rgb));
+  --ink-rgb: 28, 32, 40;
+  --fs: 1;
+  --cell-h: 52px;
 
   --surface-alpha: 0.94;
   --surface: rgba(255, 255, 255, var(--surface-alpha));
 
-  --line: rgba(74, 52, 40, 0.14);
-  --line-soft: rgba(74, 52, 40, 0.08);
-  --ink: var(--cocoa);
-  --ink-mute: rgba(74, 52, 40, 0.58);
-  --ink-faint: rgba(74, 52, 40, 0.34);
-  --wash: rgba(74, 52, 40, 0.05);
+  --line: rgba(var(--ink-rgb), 0.26);
+  --line-soft: rgba(var(--ink-rgb), 0.14);
+  --ink: rgb(var(--ink-rgb));
+  --ink-mute: rgba(var(--ink-rgb), 0.86);
+  --ink-faint: rgba(var(--ink-rgb), 0.68);
+  --wash: rgba(var(--ink-rgb), 0.09);
 
   --radius-card: 22px;
   --radius-inner: 12px;
 
   font-family: 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   color: var(--ink);
   font-feature-settings: 'tnum' 1;
 }
@@ -54,7 +60,7 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--cocoa);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
@@ -85,7 +91,7 @@ button {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
-  box-shadow: 0 18px 44px -16px rgba(74, 52, 40, 0.38);
+  box-shadow: 0 18px 44px -16px rgba(var(--ink-rgb), 0.38);
   overflow: hidden;
   display: flex;
 }
@@ -102,64 +108,37 @@ button {
 }
 
 .bear {
-  width: 76px;
-  height: 76px;
+  width: 84px;
+  height: 84px;
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: var(--surface);
-  box-shadow: 0 8px 20px -6px rgba(74, 52, 40, 0.45);
+  background: transparent;
   display: grid;
   place-items: center;
-  transition: transform 140ms ease, box-shadow 140ms ease;
+  transition: transform 140ms ease;
   touch-action: none;
 }
 
 .bear:hover {
-  transform: scale(1.04);
+  transform: scale(1.05);
 }
 
 .bear:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
-.bear.is-open {
-  box-shadow: 0 0 0 3px rgba(74, 52, 40, 0.16), 0 8px 20px -6px rgba(74, 52, 40, 0.45);
-}
-
+/* 단웅이 얼굴 — 바탕화면 어떤 색 위에서도 보이게 그림자를 살짝 */
 .bear-face {
-  width: 62px;
-  height: 62px;
+  width: 84px;
+  height: auto;
   pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.28));
 }
 
-.bear-fill {
-  fill: var(--cocoa);
-}
-
-.bear-inner {
-  fill: #fff;
-  opacity: 0.35;
-}
-
-.bear-muzzle {
-  fill: #fff;
-  opacity: 0.92;
-}
-
-.bear-eye {
-  fill: #fff;
-}
-
-.bear-nose {
-  fill: var(--cocoa);
-}
-
-.bear-mouth {
-  fill: none;
-  stroke: var(--cocoa);
-  stroke-width: 1.4;
-  stroke-linecap: round;
+.bear.is-open .bear-face {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.28)) drop-shadow(0 0 0 rgba(0, 0, 0, 0));
 }
 
 /* ───────── 시간표 화면 ───────── */
@@ -168,86 +147,173 @@ button {
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 22px 24px 20px;
-  gap: 14px;
+  padding: 16px 18px 14px;
+  gap: 10px;
   min-height: 0;
 }
 
+/* 머리 줄: 왼쪽은 지금 수업, 오른쪽은 나 · 학반 · 검색 · 설정 */
 .panel-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
+  flex: none;
+}
+
+.status {
+  min-width: 0;
 }
 
 .status-now {
   margin: 0;
-  font-size: 21px;
+  font-size: calc(17px * var(--fs));
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-meta {
-  margin: 3px 0 0;
-  font-size: 12.5px;
+  margin: 2px 0 0;
+  font-size: calc(12px * var(--fs));
   color: var(--ink-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.panel-controls {
+.status-who {
+  color: var(--ink);
+  font-weight: 750;
+}
+
+.status-dot {
+  color: var(--ink-faint);
+}
+
+.toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.tabs {
-  display: inline-flex;
-  padding: 3px;
-  gap: 2px;
-  background: var(--wash);
-  border-radius: 999px;
+  gap: 8px;
   flex: none;
 }
 
-.tab {
+/* 나 · 학반 */
+.segs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.seg {
+  min-width: 40px;
+  padding: 6px 12px;
   border: none;
-  background: transparent;
   border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 13px;
+  background: var(--wash);
+  font-size: calc(13px * var(--fs));
+  font-weight: 600;
   color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
   transition: background 120ms ease, color 120ms ease;
 }
 
-.tab:hover {
+.seg:hover {
   color: var(--ink);
 }
 
-.tab.is-on {
-  background: var(--surface);
-  color: var(--ink);
+.seg.is-on {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+/* 학반 고르기 */
+.picker {
+  position: relative;
+}
+
+.picker-pop {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  right: 0;
+  padding: 12px 12px 8px;
+  background: rgba(255, 255, 255, 0.99);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-inner);
+  box-shadow: 0 16px 32px -12px rgba(var(--ink-rgb), 0.4);
+  max-height: 440px;
+  overflow-y: auto;
+}
+
+.picker-row {
+  display: grid;
+  grid-template-columns: 42px auto;
+  align-items: start;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.picker-grade {
+  padding-top: 6px;
+  font-size: calc(12px * var(--fs));
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(74, 52, 40, 0.16);
+  color: var(--ink-mute);
 }
 
-.panel-subject {
-  margin: 0;
-  font-size: 13px;
+.picker-nums {
+  display: grid;
+  grid-template-columns: repeat(5, 36px);
+  gap: 4px;
+}
+
+.picker-num {
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: var(--wash);
+  font-size: calc(13px * var(--fs));
+  font-variant-numeric: tabular-nums;
+}
+
+.picker-num:hover {
+  background: rgba(var(--ink-rgb), 0.12);
+}
+
+.picker-num.is-on {
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 650;
+}
+
+.picker-empty {
+  margin: 0 0 4px;
+  width: 200px;
+  font-size: calc(12.5px * var(--fs));
   color: var(--ink-mute);
+}
+
+.grid-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 /* 검색 */
 
 .search {
   position: relative;
-  flex: 1;
+  width: 200px;
 }
 
 .search-input {
   width: 100%;
   padding: 9px 14px;
   font: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   color: var(--ink);
   background: var(--wash);
   border: 1px solid transparent;
@@ -269,15 +335,15 @@ button {
   position: absolute;
   z-index: 20;
   top: calc(100% + 6px);
-  left: 0;
   right: 0;
+  width: 360px;
   margin: 0;
   padding: 5px;
   list-style: none;
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid var(--line);
   border-radius: var(--radius-inner);
-  box-shadow: 0 16px 32px -12px rgba(74, 52, 40, 0.4);
+  box-shadow: 0 16px 32px -12px rgba(var(--ink-rgb), 0.4);
   max-height: 268px;
   overflow-y: auto;
 }
@@ -293,7 +359,7 @@ button {
   border: none;
   background: transparent;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
 }
 
 .search-item.is-cursor {
@@ -301,7 +367,7 @@ button {
 }
 
 .search-item-kind {
-  font-size: 11px;
+  font-size: calc(11px * var(--fs));
   color: var(--ink-faint);
 }
 
@@ -315,14 +381,14 @@ button {
 
 .search-item-sub {
   font-style: normal;
-  font-size: 11px;
+  font-size: calc(11px * var(--fs));
   font-weight: 450;
   color: var(--ink-faint);
   font-variant-numeric: tabular-nums;
 }
 
 .search-item-now {
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   color: var(--ink-mute);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -331,7 +397,7 @@ button {
 
 .search-empty {
   padding: 10px;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   color: var(--ink-mute);
 }
 
@@ -342,8 +408,6 @@ button {
   border-collapse: separate;
   border-spacing: 4px;
   table-layout: fixed;
-  flex: 1;
-  min-height: 0;
 }
 
 .grid th {
@@ -356,7 +420,7 @@ button {
 
 .grid-day {
   padding: 4px 0 6px;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   color: var(--ink-mute);
 }
 
@@ -373,19 +437,19 @@ button {
 
 .grid-period-no {
   display: block;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   font-weight: 600;
 }
 
 .grid-period-time {
   display: block;
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--fs));
   color: var(--ink-faint);
 }
 
 .grid-cell {
-  height: 58px;
-  padding: 5px 7px;
+  height: var(--cell-h);
+  padding: 4px 6px;
   border-radius: 10px;
   background: var(--wash);
   vertical-align: middle;
@@ -402,7 +466,7 @@ button {
 /* 학급 (선생님 시간표에서) — 과목 위에 작게 얹는다 */
 .cell-class {
   display: block;
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--fs));
   font-weight: 620;
   color: var(--ink-mute);
   letter-spacing: 0.01em;
@@ -411,7 +475,7 @@ button {
 
 .cell-subject {
   display: block;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   font-weight: 550;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -421,7 +485,7 @@ button {
 .cell-room,
 .cell-teacher {
   display: block;
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--fs));
   color: var(--ink-mute);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -436,21 +500,22 @@ button {
   color: var(--ink-faint);
 }
 
-/* 지금 이 교시 — 화면에서 허니색은 여기 한 곳뿐이다 */
+/* 지금 이 교시 — 테마색으로 꽉 채운다 */
 .grid-cell.is-now {
-  background: var(--honey);
-  box-shadow: 0 6px 16px -6px rgba(232, 163, 61, 0.9);
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 6px 16px -6px rgba(var(--primary-rgb), 0.6);
 }
 
 .grid-cell.is-now .cell-class,
 .grid-cell.is-now .cell-room,
 .grid-cell.is-now .cell-teacher {
-  color: rgba(74, 52, 40, 0.74);
+  color: rgba(var(--on-primary-rgb), 0.85);
 }
 
 .grid-cell.is-next {
   background: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--honey);
+  box-shadow: inset 0 0 0 1.5px var(--primary);
 }
 
 /* 비어 있을 때 */
@@ -467,14 +532,14 @@ button {
 
 .empty-title {
   margin: 0;
-  font-size: 16px;
+  font-size: calc(16px * var(--fs));
   font-weight: 600;
 }
 
 .empty-body {
   margin: 0;
   max-width: 34em;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   line-height: 1.6;
   color: var(--ink-mute);
 }
@@ -490,7 +555,7 @@ button {
   background: transparent;
   border-radius: 999px;
   padding: 6px 14px;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   color: var(--ink-mute);
   flex: none;
   transition: background 120ms ease, color 120ms ease;
@@ -502,18 +567,18 @@ button {
 }
 
 .ghost-button.is-danger:hover {
-  color: #fff;
-  background: var(--cocoa);
-  border-color: var(--cocoa);
+  color: var(--on-primary);
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 .solid-button {
   border: none;
-  background: var(--cocoa);
-  color: #fff;
+  background: var(--primary);
+  color: var(--on-primary);
   border-radius: 999px;
   padding: 9px 18px;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   font-weight: 600;
 }
 
@@ -541,7 +606,7 @@ button {
 
 .settings-title {
   margin: 0;
-  font-size: 19px;
+  font-size: calc(19px * var(--fs));
   font-weight: 650;
 }
 
@@ -555,7 +620,7 @@ button {
 
 .settings-heading {
   margin: 0;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   font-weight: 600;
   color: var(--ink-mute);
 }
@@ -569,7 +634,7 @@ button {
 
 .settings-note {
   margin: 0;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   line-height: 1.55;
   color: var(--ink-mute);
 }
@@ -578,44 +643,44 @@ button {
   margin: 0;
   padding: 9px 12px;
   border-radius: 10px;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   line-height: 1.5;
   background: var(--wash);
 }
 
 .settings-notice.is-bad {
-  box-shadow: inset 0 0 0 1.5px var(--honey);
+  box-shadow: inset 0 0 0 1.5px var(--primary);
 }
 
 .settings-check {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
   cursor: pointer;
 }
 
 .settings-check input {
   width: 16px;
   height: 16px;
-  accent-color: var(--cocoa);
+  accent-color: var(--primary);
 }
 
 .settings-slider {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
 }
 
 .settings-slider input {
   flex: 1;
   max-width: 260px;
-  accent-color: var(--cocoa);
+  accent-color: var(--primary);
 }
 
 .settings-value {
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   color: var(--ink-mute);
   min-width: 3.2em;
 }
@@ -643,13 +708,13 @@ button {
 }
 
 .period-name {
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   font-weight: 600;
 }
 
 .period-time {
   font: inherit;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   padding: 4px 7px;
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -674,14 +739,14 @@ button {
   border-radius: 50%;
   border: 1px solid var(--line);
   background: transparent;
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   color: var(--ink-faint);
 }
 
 .day-chip.is-on {
-  background: var(--cocoa);
-  border-color: var(--cocoa);
-  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
 }
 
 .settings-foot {
@@ -695,4 +760,121 @@ button {
   * {
     transition: none !important;
   }
+}
+
+.settings-input {
+  width: 200px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: calc(13px * var(--fs));
+  color: var(--ink);
+  background: var(--wash);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  user-select: text;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+/* ───────── 설정 탭 · 접기 · 테마 ───────── */
+
+.settings-tabs {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.fold-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+
+.fold-head .settings-heading {
+  margin: 0;
+}
+
+.fold-summary {
+  flex: 1;
+  font-size: calc(12px * var(--fs));
+  color: var(--ink-faint);
+}
+
+.fold-caret {
+  font-size: calc(16px * var(--fs));
+  color: var(--ink-mute);
+  transition: transform 140ms ease;
+}
+
+.fold-caret.is-open {
+  transform: rotate(90deg);
+}
+
+.themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.theme {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  transition: transform 120ms ease;
+}
+
+.theme:hover {
+  transform: scale(1.08);
+}
+
+.theme.is-on {
+  box-shadow: 0 0 0 2.5px var(--surface), 0 0 0 4.5px rgb(var(--ink-rgb));
+}
+
+/* ───────── 학반·학생 시간표 테마색 · 과목 누르면 같은 과목만 강조 ───────── */
+
+.grid-cell.has-lesson {
+  cursor: pointer;
+  transition: opacity 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.grid-cell.is-tint {
+  background: rgba(var(--primary-rgb), 0.16);
+}
+
+.grid.has-focus .grid-cell:not(.is-match):not(.is-now) {
+  opacity: 0.3;
+}
+
+.grid-cell.is-match {
+  box-shadow: inset 0 0 0 2.5px var(--primary);
+}
+
+.grid-cell.is-tint.is-match {
+  background: rgba(var(--primary-rgb), 0.36);
+}
+
+/* 설정 화면은 위젯 크기·글씨 크기와 상관없이 늘 같은 모습 */
+.settings {
+  --fs: 1;
+}
+
+/* 학반·학생 시간표에서도 지금 교시는 테마색으로 꽉 채운다 */
+.grid-cell.is-now.is-tint {
+  background: var(--primary);
+}
+
+.grid-cell.is-now.is-match {
+  box-shadow: inset 0 0 0 2.5px var(--on-primary), 0 6px 16px -6px rgba(var(--primary-rgb), 0.6);
 }

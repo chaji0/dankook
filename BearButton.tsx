@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import bearUrl from '../assets/bear.png'
 
 interface Props {
   open: boolean
@@ -62,25 +63,8 @@ export default function BearButton({ open, hint, onToggle, onSettings }: Props) 
           }
         }}
       >
-        <BearFace />
+        <img src={bearUrl} alt="" className="bear-face" draggable={false} />
       </button>
     </div>
-  )
-}
-
-function BearFace() {
-  return (
-    <svg viewBox="0 0 64 64" className="bear-face" aria-hidden="true">
-      <circle cx="16" cy="16" r="9.5" className="bear-fill" />
-      <circle cx="48" cy="16" r="9.5" className="bear-fill" />
-      <circle cx="16" cy="16" r="4.5" className="bear-inner" />
-      <circle cx="48" cy="16" r="4.5" className="bear-inner" />
-      <circle cx="32" cy="34" r="24" className="bear-fill" />
-      <ellipse cx="32" cy="42" rx="12" ry="9.5" className="bear-muzzle" />
-      <circle cx="23" cy="30" r="3.1" className="bear-eye" />
-      <circle cx="41" cy="30" r="3.1" className="bear-eye" />
-      <ellipse cx="32" cy="38" rx="3.6" ry="2.6" className="bear-nose" />
-      <path d="M32 40.6v2.2M32 42.8c0 2.4-2.6 2.4-2.6 0M32 42.8c0 2.4 2.6 2.4 2.6 0" className="bear-mouth" />
-    </svg>
   )
 }

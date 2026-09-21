@@ -11,7 +11,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 /** 곰돌이 버튼이 차지하는 정사각형 크기 (창 오른쪽 아래에 붙어 있다) */
 const BEAR = 108
-const PANEL = { width: 860, height: 620 }
+/** 위젯 크기 설정별 창 크기 (칸 높이는 src/lib/themes.ts 의 CELL_HEIGHT) */
+const PANEL_SIZES = {
+  small: { width: 740, height: 540 },
+  medium: { width: 860, height: 640 },
+  large: { width: 1040, height: 780 },
+} as const
 
 type Mode = 'collapsed' | 'expanded' | 'settings'
 
@@ -20,7 +25,11 @@ let mode: Mode = 'collapsed'
 let dragOffset = { x: 0, y: 0 }
 
 function sizeFor(m: Mode) {
-  return m === 'collapsed' ? { width: BEAR, height: BEAR } : PANEL
+  if (m === 'collapsed') return { width: BEAR, height: BEAR }
+  // 설정 화면은 위젯 크기와 상관없이 늘 같은 크기
+  if (m === 'settings') return PANEL_SIZES.medium
+  const key = store.load().settings.widgetSize
+  return PANEL_SIZES[key] ?? PANEL_SIZES.medium
 }
 
 /** 곰돌이 얼굴의 화면상 좌표 (창 오른쪽 아래 모서리 기준) */
@@ -55,6 +64,12 @@ function applyMode(next: Mode) {
 function applySettings(s: Settings) {
   if (!win) return
   win.setAlwaysOnTop(s.alwaysOnTop, 'screen-saver')
+  // 위젯 크기를 바꿨으면 펼쳐진 창 크기를 바로 맞춘다
+  if (mode !== 'collapsed') {
+    const want = sizeFor(mode)
+    const [w, h] = win.getSize()
+    if (w !== want.width || h !== want.height) applyMode(mode)
+  }
   if (process.platform === 'win32' || process.platform === 'darwin') {
     app.setLoginItemSettings({ openAtLogin: s.autoLaunch, args: [] })
   }

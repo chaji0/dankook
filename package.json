@@ -33,7 +33,8 @@
     "appId": "kr.dku.bear.timetable",
     "productName": "곰돌이 시간표",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "dist/**/*",
@@ -47,7 +48,8 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "icon": "build/icon.png"
     },
     "nsis": {
       "oneClick": false,

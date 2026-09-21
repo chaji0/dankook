@@ -21,18 +21,20 @@ export default function SearchBar({ targets, lessons, now, selectedKey, onSelect
   const results = useMemo(() => {
     const q = query.trim().toLowerCase().replace(/\s+/g, '')
     if (!q) return []
-    // 학번을 그대로 치면 그 학생이 맨 위로, 그 다음은 이름 앞부분이 맞는 사람 순서
+    // 선생님은 이름으로, 학생은 학번으로 찾는다 (학반은 옆의 "학반" 버튼으로 고른다)
     const score = (t: Target): number => {
-      const id = t.id.toLowerCase()
-      const name = t.name.toLowerCase().replace(/\s+/g, '')
-      const label = t.label.toLowerCase().replace(/\s+/g, '')
-      const sub = t.sub.toLowerCase().replace(/\s+/g, '')
-      if (id && id === q) return 0
-      if (name === q) return 1
-      if (id.startsWith(q)) return 2
-      if (name.startsWith(q)) return 3
-      if (label.includes(q)) return 4
-      if (sub.includes(q)) return 5
+      if (t.kind === '교사') {
+        const name = t.name.replace(/\s+/g, '')
+        if (name === q) return 0
+        if (name.startsWith(q)) return 1
+        if (name.includes(q)) return 3
+        return -1
+      }
+      if (t.kind === '학생') {
+        if (t.id === q) return 0
+        if (t.id.startsWith(q)) return 2
+        return -1
+      }
       return -1
     }
     return targets
@@ -44,11 +46,6 @@ export default function SearchBar({ targets, lessons, now, selectedKey, onSelect
   }, [query, targets])
 
   useEffect(() => setCursor(0), [query])
-
-  // 창이 열릴 때 바로 검색할 수 있게 한다
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
 
   function choose(t: Target | undefined) {
     if (!t) return
@@ -83,7 +80,7 @@ export default function SearchBar({ targets, lessons, now, selectedKey, onSelect
         className="search-input"
         type="text"
         value={query}
-        placeholder="학번·이름·학급 (예: 20207, 차지영, 2-2)"
+        placeholder="선생님 이름 · 학생 학번"
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => window.setTimeout(() => setFocused(false), 120)}
@@ -93,7 +90,7 @@ export default function SearchBar({ targets, lessons, now, selectedKey, onSelect
       />
       {open && (
         <ul className="search-results" role="listbox">
-          {results.length === 0 && <li className="search-empty">찾는 이름이 없습니다. 설정에서 엑셀을 확인해 주세요.</li>}
+          {results.length === 0 && <li className="search-empty">맞는 선생님·학번이 없습니다.</li>}
           {results.map((t, i) => {
             const mine = lessons.filter((l) => l.kind === t.kind && (l.id || l.name) === (t.id || t.name))
             return (
