@@ -21,7 +21,7 @@ export default function SearchBar({ targets, lessons, now, selectedKey, onSelect
   const results = useMemo(() => {
     const q = query.trim().toLowerCase().replace(/\s+/g, '')
     if (!q) return []
-    // 선생님은 이름으로, 학생은 학번으로 찾는다 (학반은 옆의 "학반" 버튼으로 고른다)
+    // 선생님은 이름으로, 학생은 이름이나 학번으로 찾는다 (학반은 옆의 "학반" 버튼으로 고른다)
     const score = (t: Target): number => {
       if (t.kind === '교사') {
         const name = t.name.replace(/\s+/g, '')
@@ -31,8 +31,12 @@ export default function SearchBar({ targets, lessons, now, selectedKey, onSelect
         return -1
       }
       if (t.kind === '학생') {
-        if (t.id === q) return 0
+        // 이름으로도 찾는다 — 동명이인은 목록에 학번이 같이 떠서 구분된다
+        const name = t.name.replace(/\s+/g, '')
+        if (t.id === q || name === q) return 0
         if (t.id.startsWith(q)) return 2
+        if (name.startsWith(q)) return 2
+        if (name.includes(q)) return 3
         return -1
       }
       return -1
@@ -80,7 +84,7 @@ export default function SearchBar({ targets, lessons, now, selectedKey, onSelect
         className="search-input"
         type="text"
         value={query}
-        placeholder="선생님 이름 · 학생 학번"
+        placeholder="선생님 · 학생 이름, 학번"
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => window.setTimeout(() => setFocused(false), 120)}

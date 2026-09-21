@@ -27,6 +27,8 @@ export interface Lesson {
   lines: string[]
   /** 교사 시간표에서 자동으로 만들어 낸 학급 시간표이면 true */
   derived?: boolean
+  /** 이 칸을 읽어 온 엑셀 파일 이름 (파일별로 지울 때 쓴다) */
+  source?: string
 }
 
 /** 검색 대상 한 명(한 반) */
@@ -41,6 +43,8 @@ export interface Target {
   sub: string
   /** 교사 시간표에서 자동으로 만들어 낸 학급이면 true */
   derived?: boolean
+  /** 읽어 온 엑셀 파일 이름 */
+  source?: string
 }
 
 /** 시정(수업 시간) 한 블록 */
@@ -61,6 +65,8 @@ export interface Block {
 export interface Settings {
   /** 내 이름(교사) 또는 학번(학생) — "나" 버튼이 이 시간표를 연다 */
   myName: string
+  /** 저장해 둔 학반 (Target.key) — 학반 버튼이 이 반을 연다 */
+  myClass: string
   /** 테마색 id (themes.ts) */
   theme: string
   /** 위젯(창) 크기 */
@@ -106,6 +112,7 @@ export const DEFAULT_BLOCKS: Block[] = [
 
 export const DEFAULT_SETTINGS: Settings = {
   myName: '',
+  myClass: '',
   theme: 'blue',
   widgetSize: 'medium',
   fontSize: 'medium',

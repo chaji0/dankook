@@ -52,6 +52,10 @@ export default function App() {
 
   const mine = useMemo(() => findMine(state.targets, state.settings.myName), [state.targets, state.settings.myName])
   const classes = useMemo(() => state.targets.filter((t) => t.kind === '학급'), [state.targets])
+  const savedClass = useMemo(
+    () => classes.find((t) => t.key === state.settings.myClass) ?? null,
+    [classes, state.settings.myClass],
+  )
 
   const selected = useMemo(
     () => state.targets.find((t) => t.key === selectedKey) ?? mine ?? state.targets[0] ?? null,
@@ -74,26 +78,9 @@ export default function App() {
   const isMine = !!mine && selected?.key === mine.key
   const statusText = selected ? currentLessonText(lessons, now) : ''
 
-  const timeText =
-    now.phase === '주말'
-      ? '오늘은 수업이 없습니다'
-      : now.phase === '수업중'
-        ? `${now.minutesLeft}분 남음`
-        : now.phase === '쉬는시간'
-          ? `${now.breakLabel} · ${now.minutesLeft}분 남음`
-          : now.phase === '수업전'
-            ? '아직 1교시 전입니다'
-            : '오늘 수업이 모두 끝났습니다'
 
   // 상태 줄 맨 앞에 붙는 이름: 차지영 · 4교시 ...
   const whoText = selected ? (selected.kind === '학생' ? selected.label : selected.name) : ''
-  const whoMeta = selected
-    ? selected.kind === '교사'
-      ? '선생님 시간표'
-      : selected.kind === '학급'
-        ? '학반 시간표'
-        : '학생 시간표'
-    : ''
 
   return (
     <div className={`app is-${mode}`}>
@@ -110,10 +97,6 @@ export default function App() {
                     {whoText && <span className="status-dot"> · </span>}
                     {statusText || '시간표를 골라 주세요'}
                   </p>
-                  <p className="status-meta">
-                    {whoMeta && `${whoMeta} · `}
-                    {timeText}
-                  </p>
                 </div>
 
                 <div className="toolbar">
@@ -128,8 +111,13 @@ export default function App() {
                     </button>
                     <ClassPicker
                       classes={classes}
-                      current={selected?.kind === '학급' ? selected : null}
-                      onSelect={pick}
+                      saved={savedClass}
+                      active={selected?.kind === '학급'}
+                      onOpen={pick}
+                      onChoose={(t) => {
+                        setSelectedKey(t.key)
+                        patch({ settings: { ...state.settings, myClass: t.key, lastKind: t.kind, lastTargetKey: t.key } })
+                      }}
                     />
                   </div>
                   <SearchBar
@@ -153,7 +141,7 @@ export default function App() {
                 <div className="empty">
                   <p className="empty-title">아직 시간표가 없습니다</p>
                   <p className="empty-body">
-                    곰돌이를 오른쪽 클릭하거나 위의 설정에서 엑셀 파일을 올리면 여기에 주간 시간표가 나옵니다.
+                    단국이를 오른쪽 클릭하거나 위의 설정에서 엑셀 파일을 올리면 여기에 주간 시간표가 나옵니다.
                   </p>
                   <button type="button" className="solid-button" onClick={() => go('settings')}>
                     엑셀 불러오기

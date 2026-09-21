@@ -29,7 +29,7 @@ export function setupAutoUpdate(getWindow: () => BrowserWindow | null) {
     const win = getWindow()
     const options = {
       type: 'info' as const,
-      title: '곰돌이 시간표',
+      title: '단국이 시간표',
       message: '업데이트가 있습니다.',
       detail: `새 버전 ${info.version}을(를) 받아 두었습니다.\n지금 적용하면 위젯이 잠깐 꺼졌다가 다시 켜집니다.`,
       buttons: ['지금 업데이트', '나중에'],

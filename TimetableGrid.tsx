@@ -11,7 +11,7 @@ interface Props {
 /**
  * 교사 시간표: 같은 반 · 같은 과목은 같은 색 (파스텔).
  * 학반·학생 시간표: 모든 칸을 테마색으로 옅게 칠한다.
- * 어느 시간표든 과목을 누르면 같은 과목 칸만 진하게 남고 나머지는 흐려진다.
+ * 과목을 누르면 같은 과목 칸만 한 단계 진해진다 (교사 시간표는 학반까지 같아야 같은 과목).
  * 파스텔은 연한 색만 골라서, 테마색으로 꽉 찬 지금 교시가 가장 먼저 눈에 띄게 한다.
  */
 const PALETTE = [
@@ -29,18 +29,34 @@ const PALETTE = [
   '#EEE1D2', // 우유차
 ]
 
+/** 눌렀을 때 쓰는 같은 계열의 한 단계 진한 색 (어둡게 필터를 씌우면 탁해져서 따로 정해 둔다) */
+const PALETTE_STRONG = [
+  '#EDD58A',
+  '#C3DDA2',
+  '#A9CDE5',
+  '#D1BDE6',
+  '#EDB8B2',
+  '#A8DBC6',
+  '#DCC8A3',
+  '#B9BFE8',
+  '#E4BDD1',
+  '#CCD79C',
+  '#AFD4D4',
+  '#DFC7AC',
+]
+
 /** 교사 시간표는 "학급+과목", 학급·학생 시간표는 "과목"이 같으면 같은 색 */
 function colorKey(l: Lesson): string {
   return l.kind === '교사' ? `${l.className}|${l.subject}` : l.subject
 }
 
 /** 월요일 1교시부터 차례로 나오는 순서대로 색을 나눠 준다 (겹치지 않게) */
-function buildColors(lessons: Lesson[]): Map<string, string> {
+function buildColors(lessons: Lesson[]): Map<string, number> {
   const ordered = [...lessons].sort((a, b) => a.day - b.day || a.period - b.period)
-  const map = new Map<string, string>()
+  const map = new Map<string, number>()
   for (const l of ordered) {
     const k = colorKey(l)
-    if (!map.has(k)) map.set(k, PALETTE[map.size % PALETTE.length])
+    if (!map.has(k)) map.set(k, map.size % PALETTE.length)
   }
   return map
 }
@@ -56,7 +72,7 @@ export default function TimetableGrid({ lessons, blocks, now }: Props) {
   useEffect(() => setFocus(null), [lessons])
 
   return (
-    <table className={`grid${focus ? ' has-focus' : ''}`}>
+    <table className="grid">
       <thead>
         <tr>
           <th scope="col" className="grid-corner">
@@ -83,7 +99,7 @@ export default function TimetableGrid({ lessons, blocks, now }: Props) {
                 const lesson = grid[p]?.[day]
                 const isNow = now.phase === '수업중' && now.day === day && now.period === p
                 const isNext = now.phase !== '수업중' && now.day === day && now.nextPeriod === p
-                const isMatch = !!lesson && focus === lesson.subject
+                const isMatch = !!lesson && focus === colorKey(lesson)
                 const cls = [
                   'grid-cell',
                   !runs ? 'is-off' : '',
@@ -100,8 +116,12 @@ export default function TimetableGrid({ lessons, blocks, now }: Props) {
                     key={day}
                     className={cls}
                     title={lesson ? lessonSummary(lesson) : undefined}
-                    style={lesson && colors && !isNow ? { background: colors.get(colorKey(lesson)) } : undefined}
-                    onClick={() => setFocus(lesson && focus !== lesson.subject ? lesson.subject : null)}
+                    style={
+                      lesson && colors && !isNow
+                        ? { background: (isMatch ? PALETTE_STRONG : PALETTE)[colors.get(colorKey(lesson)) ?? 0] }
+                        : undefined
+                    }
+                    onClick={() => setFocus(lesson && focus !== colorKey(lesson) ? colorKey(lesson) : null)}
                   >
                     {lesson ? (
                       <>

@@ -61,3 +61,26 @@ export function patch(partial: Partial<AppState>): AppState {
   const cur = load()
   return save({ ...cur, ...partial, settings: { ...cur.settings, ...(partial.settings ?? {}) } })
 }
+
+/**
+ * 이름이 "곰돌이 시간표"였던 예전 버전의 저장 파일을 새 "단국이 시간표"로 옮겨 온다.
+ * 새 폴더에 아직 아무것도 없을 때 한 번만 한다.
+ */
+export function migrateFromOldName() {
+  try {
+    const now = app.getPath('userData')
+    if (fs.existsSync(path.join(now, 'timetable.json'))) return
+    for (const old of ['곰돌이 시간표', 'bear-timetable']) {
+      const dir = path.join(app.getPath('appData'), old)
+      if (!fs.existsSync(path.join(dir, 'timetable.json'))) continue
+      fs.mkdirSync(now, { recursive: true })
+      for (const f of ['timetable.json', 'window.json']) {
+        const src = path.join(dir, f)
+        if (fs.existsSync(src)) fs.copyFileSync(src, path.join(now, f))
+      }
+      return
+    }
+  } catch {
+    /* 못 옮겨도 새로 시작하면 된다 */
+  }
+}

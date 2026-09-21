@@ -1,7 +1,7 @@
 {
-  "name": "bear-timetable",
+  "name": "dankook-timetable",
   "version": "1.0.0",
-  "description": "곰돌이 시간표 - 바탕화면 시간표 위젯",
+  "description": "단국이 시간표 - 바탕화면 시간표 위젯",
   "main": "dist-electron/main.js",
   "author": "차지영",
   "license": "MIT",
@@ -31,7 +31,7 @@
   },
   "build": {
     "appId": "kr.dku.bear.timetable",
-    "productName": "곰돌이 시간표",
+    "productName": "단국이 시간표",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -55,8 +55,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "곰돌이 시간표",
-      "artifactName": "bear-timetable-setup-${version}.${ext}"
+      "shortcutName": "단국이 시간표",
+      "artifactName": "dankook-timetable-setup-${version}.${ext}"
     },
     "publish": [
       {
@@ -65,5 +65,6 @@
         "repo": "dankook"
       }
     ]
-  }
+  },
+  "productName": "단국이 시간표"
 }

@@ -1,10 +1,10 @@
-# 🐻 곰돌이 시간표
+# 🐻 단국이 시간표
 
-바탕화면에 곰돌이 얼굴 하나만 띄워 두고, 누를 때마다 주간 시간표가 나오는 Windows 위젯.
+바탕화면에 단국이 얼굴 하나만 띄워 두고, 누를 때마다 주간 시간표가 나오는 Windows 위젯.
 
-- **왼쪽 클릭** — 시간표 펼치기 / 접기 (접어도 곰돌이는 남는다)
+- **왼쪽 클릭** — 시간표 펼치기 / 접기 (접어도 단국이는 남는다)
 - **오른쪽 클릭** — 설정
-- **끌기** — 곰돌이를 잡고 원하는 자리로 옮기면 위치가 저장된다
+- **끌기** — 단국이를 잡고 원하는 자리로 옮기면 위치가 저장된다
 - **지금 교시**가 허니색으로 칠해지고, 쉬는 시간에는 다음 수업을 알려준다
 - **검색** — 선생님 이름 · 학급 · 학번을 치면 그 사람 시간표로 바뀌고, 결과 목록에서 "지금 어디 있는지"가 바로 보인다
 
@@ -81,8 +81,8 @@ A12 (빈 줄)
 4. github.com/chaji0/dankook → 오른쪽 **Releases** → **Draft a new release**
    - **Choose a tag** 칸에 `v1.0.1` 입력 → Create new tag (버전 숫자와 똑같이, 앞에 v)
    - `release` 폴더에서 아래 **세 파일**을 끌어다 놓는다
-     - `bear-timetable-setup-1.0.1.exe`
-     - `bear-timetable-setup-1.0.1.exe.blockmap`
+     - `dankook-timetable-setup-1.0.1.exe`
+     - `dankook-timetable-setup-1.0.1.exe.blockmap`
      - `latest.yml`
    - **Publish release**
 
@@ -114,7 +114,7 @@ A12 (빈 줄)
 
 ```
 electron/
-  main.ts       창 만들기, 곰돌이 끌기, 항상 위·자동 실행, 엑셀 열기
+  main.ts       창 만들기, 단국이 끌기, 항상 위·자동 실행, 엑셀 열기
   updater.ts    자동 업데이트 (GitHub Releases 확인 → 팝업)
   preload.ts    화면 ↔ 메인 프로세스 연결 통로
   excel.ts      엑셀 읽기 (블록 찾기 → 칸 쪼개기 → 학급 시간표 만들기)
@@ -122,7 +122,7 @@ electron/
 src/
   App.tsx                 전체 상태
   components/
-    BearButton.tsx        곰돌이 (클릭·우클릭·끌기)
+    BearButton.tsx        단국이 (클릭·우클릭·끌기)
     SearchBar.tsx         검색창
     TimetableGrid.tsx     주간 시간표 격자
     SettingsView.tsx      설정
@@ -132,7 +132,7 @@ src/
   styles.css              색은 코코아·허니 두 가지만
 ```
 
-저장 위치: `%APPDATA%\곰돌이 시간표\timetable.json` (설정 → `저장 폴더 열기`)
+저장 위치: `%APPDATA%\단국이 시간표\timetable.json` (설정 → `저장 폴더 열기`)
 
 ---
 

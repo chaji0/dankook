@@ -129,6 +129,23 @@ button {
 }
 
 /* 단웅이 얼굴 — 바탕화면 어떤 색 위에서도 보이게 그림자를 살짝 */
+.bear > .bear-face {
+  grid-area: 1 / 1;
+}
+
+/* 마우스를 올리면 웃는 단국이로 바뀐다 */
+.bear-face.is-hover {
+  opacity: 0;
+}
+
+.bear:hover .bear-face.is-hover {
+  opacity: 1;
+}
+
+.bear:hover .bear-face:not(.is-hover) {
+  opacity: 0;
+}
+
 .bear-face {
   width: 84px;
   height: auto;
@@ -846,23 +863,21 @@ button {
 
 .grid-cell.has-lesson {
   cursor: pointer;
-  transition: opacity 140ms ease, box-shadow 140ms ease, background 140ms ease;
+  transition: box-shadow 140ms ease, background 140ms ease;
 }
 
 .grid-cell.is-tint {
   background: rgba(var(--primary-rgb), 0.16);
 }
 
-.grid.has-focus .grid-cell:not(.is-match):not(.is-now) {
-  opacity: 0.3;
-}
-
+/* 누른 과목 — 색은 한 단계 진하게(교사 시간표는 TimetableGrid 에서), 얇은 테두리로 또렷하게 */
 .grid-cell.is-match {
-  box-shadow: inset 0 0 0 2.5px var(--primary);
+  box-shadow: inset 0 0 0 1.5px rgba(var(--ink-rgb), 0.35);
 }
 
+/* 학반·학생 시간표: 테마색을 더 진하게 */
 .grid-cell.is-tint.is-match {
-  background: rgba(var(--primary-rgb), 0.36);
+  background: rgba(var(--primary-rgb), 0.34);
 }
 
 /* 설정 화면은 위젯 크기·글씨 크기와 상관없이 늘 같은 모습 */
@@ -876,5 +891,132 @@ button {
 }
 
 .grid-cell.is-now.is-match {
-  box-shadow: inset 0 0 0 2.5px var(--on-primary), 0 6px 16px -6px rgba(var(--primary-rgb), 0.6);
+  box-shadow: inset 0 0 0 2px rgba(var(--on-primary-rgb), 0.9), 0 6px 16px -6px rgba(var(--primary-rgb), 0.6);
+}
+
+/* 학반 [2-2][▼] */
+.split {
+  display: inline-flex;
+}
+
+.split-main {
+  border-radius: 999px 0 0 999px;
+  padding-right: 8px;
+}
+
+.split-caret {
+  border-radius: 0 999px 999px 0;
+  padding: 6px 9px 6px 7px;
+  min-width: 0;
+  font-size: calc(10px * var(--fs));
+  border-left: 1px solid var(--line-soft);
+}
+
+.split-caret.is-on {
+  border-left-color: rgba(var(--on-primary-rgb), 0.35);
+}
+
+/* 1-1 ~ 3-13 스크롤 목록 */
+.picker-list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 120px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.99);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-inner);
+  box-shadow: 0 16px 32px -12px rgba(var(--ink-rgb), 0.4);
+}
+
+.picker-list .picker-grade {
+  margin: 0;
+  padding: 8px 10px 3px;
+  font-size: calc(11px * var(--fs));
+}
+
+.picker-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  font-size: calc(13px * var(--fs));
+  font-variant-numeric: tabular-nums;
+}
+
+.picker-item:hover {
+  background: var(--wash);
+}
+
+.picker-item.is-on {
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 650;
+}
+
+/* 불러온 파일 목록 — 마우스를 올리면 × 가 나온다 */
+.files {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px 7px 12px;
+  border-radius: 10px;
+  background: var(--wash);
+}
+
+.file-name {
+  font-size: calc(13px * var(--fs));
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.file-meta {
+  flex: 1;
+  font-size: calc(12px * var(--fs));
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-x {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-mute);
+  font-size: calc(16px * var(--fs));
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 120ms ease, background 120ms ease;
+}
+
+.file:hover .file-x,
+.file-x:focus-visible {
+  opacity: 1;
+}
+
+.file-x:hover {
+  background: rgba(var(--ink-rgb), 0.14);
+  color: var(--ink);
 }

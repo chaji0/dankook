@@ -1,9 +1,10 @@
 import { useRef } from 'react'
 import bearUrl from '../assets/bear.png'
+import bearHoverUrl from '../assets/bear-hover.png'
 
 interface Props {
   open: boolean
-  /** 지금 수업 한 줄 (곰돌이에 마우스를 올리면 보인다) */
+  /** 지금 수업 한 줄 (단국이에 마우스를 올리면 보인다) */
   hint: string
   onToggle: () => void
   onSettings: () => void
@@ -46,7 +47,7 @@ export default function BearButton({ open, hint, onToggle, onSettings }: Props) 
       <button
         type="button"
         className={`bear${open ? ' is-open' : ''}`}
-        title={hint || '곰돌이 시간표 — 왼쪽 클릭으로 열고 닫기, 오른쪽 클릭으로 설정'}
+        title={hint || '단국이 시간표 — 왼쪽 클릭으로 열고 닫기, 오른쪽 클릭으로 설정'}
         aria-label={open ? '시간표 숨기기' : '시간표 보기'}
         aria-pressed={open}
         onPointerDown={handlePointerDown}
@@ -64,6 +65,7 @@ export default function BearButton({ open, hint, onToggle, onSettings }: Props) 
         }}
       >
         <img src={bearUrl} alt="" className="bear-face" draggable={false} />
+        <img src={bearHoverUrl} alt="" className="bear-face is-hover" draggable={false} />
       </button>
     </div>
   )

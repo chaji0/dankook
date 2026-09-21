@@ -26,6 +26,7 @@ const api = {
   dragMove: (point: { x: number; y: number }) => ipcRenderer.send('drag:move', point),
   importExcel: (): Promise<ImportResult> => ipcRenderer.invoke('excel:import'),
   clearExcel: (): Promise<AppState> => ipcRenderer.invoke('excel:clear'),
+  removeExcel: (name: string): Promise<AppState> => ipcRenderer.invoke('excel:remove', name),
   quit: () => ipcRenderer.invoke('app:quit'),
   openDataFolder: () => ipcRenderer.invoke('app:openDataFolder'),
 }

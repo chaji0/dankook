@@ -15,7 +15,8 @@ import { Kind, Lesson, Target, targetKey } from '../src/lib/types'
  *
  * 칸 안의 줄은 시간표 종류에 따라 다르다.
  *   교사 시간표 : 학급 / 교과            (예: "2-2" ⏎ "기하 A1")
- *   학급·학생   : 교과 / 교실 / 과목교사  (예: "기하 A1" ⏎ "수학실1" ⏎ "차지영")
+ *   학급·학생   : 교과 / 과목교사          (예: "영어ⅡA" ⏎ "임별")
+ *                 교실 / 교과 / 과목교사   (이동수업, 예: "2-7" 또는 "이동A" ⏎ "인공지능 기초 D1" ⏎ "안승진")
  * 어떤 줄이 오든 lines 에 원본을 그대로 담아 두어 화면에서 빠뜨리지 않는다.
  */
 
@@ -120,6 +121,15 @@ export function splitCell(lines: string[], kind: Kind): Omit<Lesson, 'kind' | 'i
   }
   if (rest.length === 0) return out
 
+  // 학생·학급 시간표의 이동수업 칸: 교실(2-7, 이동A …) / 교과 / 과목 선생님
+  if (kind !== '교사' && rest.length >= 3) {
+    out.room = isClassName(rest[0]) ? normalizeClassName(rest[0]) : rest[0]
+    out.subject = rest[1]
+    out.teacher = rest[2]
+    if (rest.length > 3) out.room = [out.room, ...rest.slice(3)].join(' ')
+    return out
+  }
+
   out.subject = rest[0]
   const tail = rest.slice(1)
 
@@ -160,7 +170,7 @@ function toGrid(sheet: XLSX.WorkSheet): string[][] {
   return rows.map((r) => (r ?? []).map((c) => String(c ?? '')))
 }
 
-export function parseWorkbook(buffer: Buffer): ParseResult {
+export function parseWorkbook(buffer: Buffer, source = ''): ParseResult {
   const wb = XLSX.read(buffer, { type: 'buffer' })
   const lessons: Lesson[] = []
   const warnings: string[] = []
@@ -198,15 +208,9 @@ export function parseWorkbook(buffer: Buffer): ParseResult {
     )
   }
 
-  // 교사 시간표만 있으면 그것으로 학급 시간표를 만들어 준다
-  const derived = deriveClassTimetables(lessons)
-  lessons.push(...derived)
-
+  for (const l of lessons) l.source = source
+  // 교사 시간표로 학급 시간표를 만드는 일은 다른 파일과 합친 뒤에 한다 (rebuild)
   const targets = buildTargets(lessons)
-  if (derived.length > 0) {
-    const n = new Set(derived.map((l) => l.name)).size
-    warnings.push(`선생님 시간표에서 학급 ${n}개의 시간표를 함께 만들었습니다.`)
-  }
   warnings.unshift(`시간표 ${blockCount}개를 읽었습니다.`)
 
   return { lessons, targets, warnings }
@@ -264,7 +268,7 @@ function readBlock(grid: string[][], start: number, end: number, head: BlockHead
  * 그 학급의 시간표가 파일에 따로 없으면 여기서 뒤집어서 만들어 준다.
  * (교과는 칸에서, 과목 선생님은 블록 머리글에서 가져온다)
  */
-function deriveClassTimetables(lessons: Lesson[]): Lesson[] {
+export function deriveClassTimetables(lessons: Lesson[]): Lesson[] {
   const already = new Set(lessons.filter((l) => l.kind === '학급').map((l) => l.name))
   const seen = new Set<string>()
   const made: Lesson[] = []
@@ -287,20 +291,21 @@ function deriveClassTimetables(lessons: Lesson[]): Lesson[] {
       className: l.className,
       lines: [l.subject, l.room, l.name].filter(Boolean),
       derived: true,
+      source: l.source,
     })
   }
   return made
 }
 
 /** 검색 목록을 만든다 */
-function buildTargets(lessons: Lesson[]): Target[] {
+export function buildTargets(lessons: Lesson[]): Target[] {
   const map = new Map<string, Target>()
   for (const l of lessons) {
     const key = targetKey(l.kind, l.id, l.name)
     if (map.has(key)) continue
     const label = l.kind === '학생' && l.id ? `${l.id} ${l.name}` : l.name || l.id
     const sub = l.kind === '교사' ? l.id : l.kind === '학생' ? l.className : ''
-    map.set(key, { key, kind: l.kind, id: l.id, name: l.name, label, sub, derived: l.derived })
+    map.set(key, { key, kind: l.kind, id: l.id, name: l.name, label, sub, derived: l.derived, source: l.source })
   }
   return [...map.values()].sort((a, b) => {
     // 학급은 학년·반 숫자 순으로

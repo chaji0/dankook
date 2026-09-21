@@ -53,6 +53,30 @@ export default function SettingsView({ state, onPatch, onClose }: Props) {
     }
   }
 
+  async function removeFile(name: string) {
+    setBusy(true)
+    try {
+      const next = await window.bear.removeExcel(name)
+      onPatch(next)
+      setNotice({ tone: 'ok', text: `${name}을(를) 지웠습니다.` })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  /** 파일 하나에서 무엇을 읽었는지 한 줄로 */
+  function describeFile(name: string): string {
+    const mine = state.targets.filter((t) => t.source === name)
+    const n = (k: string, derived = false) => mine.filter((t) => t.kind === k && !!t.derived === derived).length
+    const parts = [
+      n('교사') && `선생님 ${n('교사')}명`,
+      n('학급') && `학급 ${n('학급')}개`,
+      n('학생') && `학생 ${n('학생')}명`,
+      n('학급', true) && `학급 ${n('학급', true)}개 자동`,
+    ].filter(Boolean)
+    return parts.length ? parts.join(' · ') : '다시 불러오면 내용이 표시됩니다'
+  }
+
   function setBlock(index: number, next: Partial<Block>) {
     const blocks = state.blocks.map((b, i) => (i === index ? { ...b, ...next } : b))
     onPatch({ blocks })
@@ -64,11 +88,6 @@ export default function SettingsView({ state, onPatch, onClose }: Props) {
     setBlock(index, { days })
   }
 
-  const counts = {
-    교사: state.targets.filter((t) => t.kind === '교사').length,
-    학급: state.targets.filter((t) => t.kind === '학급').length,
-    학생: state.targets.filter((t) => t.kind === '학생').length,
-  }
 
   const classBlocks = state.blocks.filter((b) => b.type === 'class')
   const periodSummary = classBlocks.length
@@ -138,11 +157,30 @@ export default function SettingsView({ state, onPatch, onClose }: Props) {
                 </button>
               )}
             </div>
-            <p className="settings-note">
-              {state.sources.length > 0
-                ? `${state.sources.join(', ')} · 선생님 ${counts.교사}명 · 학급 ${counts.학급}개 · 학생 ${counts.학생}명`
-                : '나이스에서 내려받은 시간표 엑셀을 그대로 올리면 됩니다. 선생님·학급·학생 파일을 따로 올려도 합쳐집니다.'}
-            </p>
+            {state.sources.length > 0 ? (
+              <ul className="files">
+                {state.sources.map((f) => (
+                  <li key={f} className="file">
+                    <span className="file-name">{f}</span>
+                    <span className="file-meta">{describeFile(f)}</span>
+                    <button
+                      type="button"
+                      className="file-x"
+                      aria-label={`${f} 지우기`}
+                      title="이 파일만 지우기"
+                      disabled={busy}
+                      onClick={() => removeFile(f)}
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="settings-note">
+                나이스에서 내려받은 시간표 엑셀을 그대로 올리면 됩니다. 선생님·학급·학생 파일을 따로 올려도 합쳐집니다.
+              </p>
+            )}
             {notice && <p className={`settings-notice is-${notice.tone}`}>{notice.text}</p>}
           </section>
 

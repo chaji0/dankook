@@ -2,20 +2,28 @@ import { app, BrowserWindow, dialog, ipcMain, screen, shell } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { ExcelError, parseWorkbook } from './excel'
+import { ExcelError, buildTargets, deriveClassTimetables, parseWorkbook } from './excel'
+import type { Lesson } from '../src/lib/types'
 import * as store from './store'
 import { setupAutoUpdate } from './updater'
 import { AppState, Settings } from '../src/lib/types'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-/** 곰돌이 버튼이 차지하는 정사각형 크기 (창 오른쪽 아래에 붙어 있다) */
+/** 단국이 버튼이 차지하는 정사각형 크기 (창 오른쪽 아래에 붙어 있다) */
 const BEAR = 108
+/** 합친 수업으로 학급 자동 생성과 검색 목록을 다시 만든다 */
+function rebuild(own: Lesson[]) {
+  const base = own.filter((l) => !l.derived)
+  const lessons = [...base, ...deriveClassTimetables(base)]
+  return { lessons, targets: buildTargets(lessons) }
+}
+
 /** 위젯 크기 설정별 창 크기 (칸 높이는 src/lib/themes.ts 의 CELL_HEIGHT) */
 const PANEL_SIZES = {
-  small: { width: 740, height: 540 },
-  medium: { width: 860, height: 640 },
-  large: { width: 1040, height: 780 },
+  small: { width: 620, height: 540 },
+  medium: { width: 720, height: 640 },
+  large: { width: 880, height: 780 },
 } as const
 
 type Mode = 'collapsed' | 'expanded' | 'settings'
@@ -32,7 +40,7 @@ function sizeFor(m: Mode) {
   return PANEL_SIZES[key] ?? PANEL_SIZES.medium
 }
 
-/** 곰돌이 얼굴의 화면상 좌표 (창 오른쪽 아래 모서리 기준) */
+/** 단국이 얼굴의 화면상 좌표 (창 오른쪽 아래 모서리 기준) */
 function bearOrigin(): { x: number; y: number } {
   if (!win) return { x: 0, y: 0 }
   const [x, y] = win.getPosition()
@@ -54,7 +62,7 @@ function applyMode(next: Mode) {
   const bear = bearOrigin()
   mode = next
   const { width, height } = sizeFor(next)
-  // 곰돌이는 제자리에 두고 창만 왼쪽 위로 자란다
+  // 단국이는 제자리에 두고 창만 왼쪽 위로 자란다
   const raw = { x: bear.x + BEAR - width, y: bear.y + BEAR - height }
   const pos = clampToDisplay(raw.x, raw.y, width, height)
   win.setBounds({ ...pos, width, height }, false)
@@ -92,7 +100,7 @@ function createWindow() {
     fullscreenable: false,
     hasShadow: false,
     skipTaskbar: false,
-    title: '곰돌이 시간표',
+    title: '단국이 시간표',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -144,10 +152,12 @@ ipcMain.on('drag:start', (_e, offset: { x: number; y: number }) => {
 
 ipcMain.on('drag:move', (_e, pt: { x: number; y: number }) => {
   if (!win) return
-  const { width, height } = win.getBounds()
+  // Windows 화면 배율(125%·150%)에서 setPosition을 여러 번 부르면 창이 1px씩 커지는 문제가 있어서,
+  // 늘 정해진 크기로 setBounds 한다
+  const { width, height } = sizeFor(mode)
   // dragOffset은 잡은 지점의 창 안쪽 좌표라서 그대로 빼면 창 왼쪽 위가 된다
   const pos = clampToDisplay(pt.x - dragOffset.x, pt.y - dragOffset.y, width, height)
-  win.setPosition(pos.x, pos.y, false)
+  win.setBounds({ x: pos.x, y: pos.y, width, height }, false)
 })
 
 ipcMain.handle('excel:import', async () => {
@@ -161,30 +171,38 @@ ipcMain.handle('excel:import', async () => {
 
   const file = res.filePaths[0]
   try {
-    const buffer = fs.readFileSync(file)
-    const parsed = parseWorkbook(buffer)
-    const cur = store.load()
-    // 선생님 파일과 학생 파일을 따로 올릴 수 있게 합쳐서 저장한다.
-    // 같은 사람(반)이 다시 들어오면 새로 읽은 쪽으로 바꾼다.
-    const incoming = new Set(parsed.targets.map((t) => t.key))
-    const keep = cur.lessons.filter((l) => !incoming.has(`${l.kind}:${l.id || l.name}`))
-    const lessons = [...keep, ...parsed.lessons]
-    const targets = [...cur.targets.filter((t) => !incoming.has(t.key)), ...parsed.targets].sort(
-      (a, b) => a.label.localeCompare(b.label, 'ko'),
-    )
     const name = path.basename(file)
+    const parsed = parseWorkbook(fs.readFileSync(file), name)
+    const cur = store.load()
+    // 선생님·학급·학생 파일을 따로 올릴 수 있게 합친다.
+    // 같은 파일을 다시 올리거나 같은 사람(반)이 다시 들어오면 새로 읽은 쪽으로 바꾼다.
+    const incoming = new Set(parsed.targets.map((t) => t.key))
+    const keep = cur.lessons.filter(
+      (l) => !l.derived && l.source !== name && !incoming.has(`${l.kind}:${l.id || l.name}`),
+    )
+    const built = rebuild([...keep, ...parsed.lessons])
     const next = store.patch({
-      lessons,
-      targets,
+      ...built,
       sourceFile: name,
       sources: [...cur.sources.filter((f) => f !== name), name],
       importedAt: new Date().toISOString(),
     })
-    return { canceled: false, state: next, warnings: parsed.warnings }
+    const warnings = [...parsed.warnings]
+    const made = new Set(built.lessons.filter((l) => l.derived && l.source === name).map((l) => l.name)).size
+    if (made > 0) warnings.push(`선생님 시간표에서 학급 ${made}개의 시간표를 함께 만들었습니다.`)
+    return { canceled: false, state: next, warnings }
   } catch (e) {
     const message = e instanceof ExcelError ? e.message : `파일을 읽지 못했습니다. (${String(e)})`
     return { canceled: false, error: message }
   }
+})
+
+/** 불러온 파일 하나만 지운다 */
+ipcMain.handle('excel:remove', (_e, name: string) => {
+  const cur = store.load()
+  const built = rebuild(cur.lessons.filter((l) => !l.derived && l.source !== name))
+  const sources = cur.sources.filter((f) => f !== name)
+  return store.patch({ ...built, sources, sourceFile: sources[sources.length - 1] ?? '' })
 })
 
 ipcMain.handle('excel:clear', () => {
@@ -213,6 +231,7 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.whenReady().then(() => {
+    store.migrateFromOldName()
     createWindow()
     setupAutoUpdate(() => win)
   })

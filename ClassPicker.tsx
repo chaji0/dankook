@@ -4,17 +4,27 @@ import { Target } from '../lib/types'
 interface Props {
   /** 학급 시간표 목록 */
   classes: Target[]
-  /** 지금 보고 있는 학급 (없으면 null) */
-  current: Target | null
-  onSelect: (target: Target) => void
+  /** 저장해 둔 "내 학반" (없으면 null) */
+  saved: Target | null
+  /** 지금 학반 시간표를 보고 있는지 */
+  active: boolean
+  /** 학반 시간표 열기 */
+  onOpen: (target: Target) => void
+  /** 목록에서 다른 반을 골랐을 때 — 저장까지 한다 */
+  onChoose: (target: Target) => void
 }
 
-/** "학반" 버튼 — 누르면 학년별로 반 번호가 펼쳐진다 */
-export default function ClassPicker({ classes, current, onSelect }: Props) {
+/**
+ * [2-2][▼] 버튼
+ *   2-2 → 저장해 둔 반 시간표 열기
+ *   ▼   → 1-1 ~ 3-13 목록을 스크롤해서 고르기 (고른 반은 껐다 켜도 기억)
+ */
+export default function ClassPicker({ classes, saved, active, onOpen, onChoose }: Props) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
-  // 학년 → 반 목록 (반 번호 순)
+  // 학년 → 반 (반 번호 순)
   const grades = useMemo(() => {
     const map = new Map<number, { no: number; target: Target }[]>()
     for (const t of classes) {
@@ -44,37 +54,55 @@ export default function ClassPicker({ classes, current, onSelect }: Props) {
     }
   }, [open])
 
+  // 목록을 열면 저장된 반이 보이도록 스크롤
+  useEffect(() => {
+    if (!open || !listRef.current) return
+    const on = listRef.current.querySelector<HTMLElement>('.is-on')
+    if (on) listRef.current.scrollTop = on.offsetTop - 72
+  }, [open])
+
   return (
     <div className="picker" ref={wrapRef}>
-      <button
-        type="button"
-        className={`seg${current ? ' is-on' : ''}`}
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        {current ? current.name : '학반'}
-      </button>
+      <div className="split">
+        <button
+          type="button"
+          className={`seg split-main${active ? ' is-on' : ''}`}
+          onClick={() => (saved ? onOpen(saved) : setOpen(true))}
+          title={saved ? `${saved.name} 시간표` : '학반 고르기'}
+        >
+          {saved ? saved.name : '학반'}
+        </button>
+        <button
+          type="button"
+          className={`seg split-caret${active ? ' is-on' : ''}`}
+          aria-label="다른 학반 고르기"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          ▼
+        </button>
+      </div>
       {open && (
-        <div className="picker-pop" role="dialog" aria-label="학반 고르기">
+        <div className="picker-list" ref={listRef} role="listbox" aria-label="학반 고르기">
           {grades.length === 0 && <p className="picker-empty">설정에서 시간표 엑셀을 먼저 불러와 주세요.</p>}
           {grades.map(({ grade, list }) => (
-            <div key={grade} className="picker-row">
-              <span className="picker-grade">{grade}학년</span>
-              <div className="picker-nums">
-                {list.map(({ no, target }) => (
-                  <button
-                    key={target.key}
-                    type="button"
-                    className={`picker-num${current?.key === target.key ? ' is-on' : ''}`}
-                    onClick={() => {
-                      onSelect(target)
-                      setOpen(false)
-                    }}
-                  >
-                    {no}
-                  </button>
-                ))}
-              </div>
+            <div key={grade}>
+              <p className="picker-grade">{grade}학년</p>
+              {list.map(({ target }) => (
+                <button
+                  key={target.key}
+                  type="button"
+                  role="option"
+                  aria-selected={saved?.key === target.key}
+                  className={`picker-item${saved?.key === target.key ? ' is-on' : ''}`}
+                  onClick={() => {
+                    onChoose(target)
+                    setOpen(false)
+                  }}
+                >
+                  {target.name}
+                </button>
+              ))}
             </div>
           ))}
         </div>
